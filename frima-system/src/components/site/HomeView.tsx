@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n/context";
 import { LiveRefresh } from "@/components/live/LiveRefresh";
-import { HeroSlider, type HeroSlide } from "./HeroSlider";
+import type { HeroSlide } from "./HeroSlider";
+import { MistHero } from "./MistHero";
 import { Rail } from "./Rail";
 import { RoomCard, type RoomCardData } from "./RoomCard";
 import { ScrollFeature, type FeatureItem } from "./ScrollFeature";
@@ -198,20 +199,20 @@ export function HomeView({
       {/* ----------------------------------------------------------------- */}
       {/* Hero                                                               */}
       {/* ----------------------------------------------------------------- */}
-      <HeroSlider slides={heroSlides}>
-        <Container size="wide" className="pb-24 pt-32 sm:pb-28 sm:pt-36">
+      <MistHero slides={heroSlides}>
+        <Container size="wide" className="hero-pad">
           <Reveal>
             <Eyebrow tone="light" className="on-image-soft">
               {t("site.hero.coords")}
             </Eyebrow>
-            <h1 className="display-xl on-image mt-5 max-w-4xl text-white sm:mt-6">
+            <h1 className="hero-title display-xl on-image mt-5 max-w-4xl text-white sm:mt-6">
               {t("site.home.heroTitle")}
             </h1>
-            <p className="lede on-image-soft mt-5 max-w-xl text-white/80 sm:mt-7">
+            <p className="hero-lede lede on-image-soft mt-5 max-w-xl text-white/80 sm:mt-7">
               {t("site.home.heroLead")}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
+            <div className="hero-actions mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
               <Link href="/rooms">
                 <GhostLink tone="gold">{t("site.home.heroCta")}</GhostLink>
               </Link>
@@ -224,7 +225,7 @@ export function HomeView({
           <Reveal delay={200}>
             {/* `contents` lets every label share one grid row and every value
                 the next, so the figures line up however the labels wrap. */}
-            <dl className="mt-10 grid max-w-3xl grid-cols-3 items-end gap-x-4 gap-y-2 border-t border-white/15 pt-6 sm:mt-14 sm:gap-x-8 sm:pt-8">
+            <dl className="hero-stats mt-10 grid max-w-3xl grid-cols-3 items-end gap-x-4 gap-y-2 border-t border-white/15 pt-6 sm:mt-14 sm:gap-x-8 sm:pt-8">
               {[
                 { label: t("site.home.statRooms"), value: String(availableCount) },
                 { label: t("site.home.statAirport"), value: `10 ${t("site.home.minutes")}` },
@@ -240,7 +241,7 @@ export function HomeView({
             </dl>
           </Reveal>
         </Container>
-      </HeroSlider>
+      </MistHero>
 
       {/* ----------------------------------------------------------------- */}
       {/* Narrative                                                          */}

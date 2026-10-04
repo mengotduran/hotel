@@ -136,6 +136,72 @@ body {
   animation: slow-pan 26s ease-in-out infinite alternate;
 }
 
+/* The hero copy sits inside a pinned 100vh stage, so unlike an ordinary band
+   it cannot grow to fit — anything taller than the viewport is clipped, and
+   because the block is bottom-aligned it is the headline that loses. The
+   type scale here is therefore driven by viewport *height* as well as width:
+   on a short laptop window the headline and lede step down and the gaps
+   tighten, so the whole block keeps clear of the fixed header above and the
+   screen edge below instead of overflowing. */
+.hero-pad {
+  padding-top: 7rem;
+  padding-bottom: 4.5rem;
+}
+@media (min-width: 640px) {
+  .hero-pad {
+    padding-top: 9rem;
+    padding-bottom: 7rem;
+  }
+}
+
+@media (max-height: 860px) {
+  /* The bottom padding also has to clear the floating language switcher
+     pinned to the bottom-left corner, or the first stat sits behind it. */
+  .hero-pad {
+    padding-top: 6.5rem;
+    padding-bottom: 5rem;
+  }
+  .hero-title {
+    font-size: clamp(2.75rem, 5.5vw, 4.5rem);
+    margin-top: 1rem;
+  }
+  .hero-lede {
+    font-size: 1.25rem;
+    line-height: 1.55;
+    margin-top: 1rem;
+  }
+  .hero-actions {
+    margin-top: 1.5rem;
+  }
+  .hero-stats {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+  }
+}
+
+@media (max-height: 720px) {
+  .hero-pad {
+    padding-top: 5.5rem;
+    padding-bottom: 4.5rem;
+  }
+  .hero-title {
+    font-size: clamp(2.5rem, 4.6vw, 3.75rem);
+    margin-top: 0.75rem;
+  }
+  .hero-lede {
+    font-size: 1.125rem;
+    line-height: 1.5;
+    margin-top: 0.75rem;
+  }
+  .hero-actions {
+    margin-top: 1.25rem;
+  }
+  .hero-stats {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;

@@ -54,7 +54,7 @@ export function HeroSlider({
   }, []);
 
   return (
-    <section className="relative flex min-h-[88svh] items-end overflow-hidden bg-navy-deep sm:min-h-[92svh]">
+    <section className="relative flex h-full items-end overflow-hidden bg-navy-deep">
       <div
         className="absolute inset-0"
         onTouchStart={(e) => {
