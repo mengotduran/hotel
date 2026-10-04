@@ -1,0 +1,448 @@
+// FRIMA Guest Suites — Hotel Management & Accounting System
+// Money is stored as integer XAF (FCFA has no subunit).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+model Setting {
+  key   String @id
+  value String
+}
+
+/// Monotonic counters backing every human-facing document number.
+model Sequence {
+  key   String @id // e.g. "RECEIPT:2026"
+  value Int    @default(0)
+}
+
+// ---------------------------------------------------------------------------
+// Analytical axis: the hotel's departments
+// ---------------------------------------------------------------------------
+
+model Department {
+  id             String  @id @default(cuid())
+  code           String  @unique // HEB | RES | ESP | GEN
+  nameFr         String
+  nameEn         String
+  revenueAccount String // default SYSCOHADA revenue account
+  colour         String  @default("#1E3A5F")
+  sortOrder      Int     @default(0)
+  active         Boolean @default(true)
+
+  rooms        Room[]
+  serviceItems ServiceItem[]
+  invoiceLines InvoiceLine[]
+  expenses     Expense[]
+  journalLines JournalLine[]
+}
+
+// ---------------------------------------------------------------------------
+// Chart of accounts (SYSCOHADA révisé)
+// ---------------------------------------------------------------------------
+
+model Account {
+  code      String  @id
+  nameFr    String
+  nameEn    String
+  type      String // ASSET | LIABILITY | EQUITY | REVENUE | EXPENSE
+  klass     Int // SYSCOHADA class 1..7
+  isPosting Boolean @default(true)
+
+  lines JournalLine[]
+}
+
+// ---------------------------------------------------------------------------
+// Inventory of lettable units
+// ---------------------------------------------------------------------------
+
+model Room {
+  id           String  @id @default(cuid())
+  number       String  @unique
+  slug         String  @unique
+  kind         String // ROOM | STUDIO | APARTMENT | HALL
+  name         String?
+  floor        String?
+  capacity     Int     @default(2)
+  baseRate     Int
+  status       String  @default("AVAILABLE") // AVAILABLE | OCCUPIED | CLEANING | MAINTENANCE | OUT_OF_SERVICE
+  notes        String?
+  active       Boolean @default(true)
+  departmentId String
+
+  // Public website
+  published     Boolean @default(false)
+  featured      Boolean @default(false)
+  headlineFr    String?
+  headlineEn    String?
+  descriptionFr String?
+  descriptionEn String?
+  /// JSON array of amenity codes, e.g. ["WIFI","AC","TV"]
+  amenities     String  @default("[]")
+  sortOrder     Int     @default(0)
+
+  department Department       @relation(fields: [departmentId], references: [id])
+  stays      Stay[]
+  images     RoomImage[]
+  bookings   BookingRequest[]
+
+  @@index([status])
+  @@index([published])
+}
+
+// ---------------------------------------------------------------------------
+// Third parties
+// ---------------------------------------------------------------------------
+
+model Client {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  type      String   @default("INDIVIDUAL") // INDIVIDUAL | COMPANY
+  name      String
+  phone     String?
+  email     String?
+  idNumber  String?
+  address   String?
+  city      String?
+  country   String   @default("Cameroun")
+  notes     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  stays    Stay[]
+  invoices Invoice[]
+  payments Payment[]
+
+  @@index([name])
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  expenses Expense[]
+}
+
+// ---------------------------------------------------------------------------
+// Occupancy
+// ---------------------------------------------------------------------------
+
+model Stay {
+  id             String    @id @default(cuid())
+  reference      String    @unique
+  roomId         String
+  clientId       String
+  invoiceId      String?
+  checkIn        DateTime
+  checkOut       DateTime
+  actualCheckIn  DateTime?
+  actualCheckOut DateTime?
+  adults         Int       @default(1)
+  children       Int       @default(0)
+  nightlyRate    Int
+  status         String    @default("RESERVED") // RESERVED | CHECKED_IN | CHECKED_OUT | CANCELLED | NO_SHOW
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  room    Room     @relation(fields: [roomId], references: [id])
+  client  Client   @relation(fields: [clientId], references: [id])
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([roomId, checkIn, checkOut])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Sellable services (F&B, space rental, extras)
+// ---------------------------------------------------------------------------
+
+model ServiceItem {
+  id           String  @id @default(cuid())
+  code         String  @unique
+  nameFr       String
+  nameEn       String
+  departmentId String
+  category     String?
+  unitPrice    Int
+  unit         String  @default("unit")
+  taxable      Boolean @default(true)
+  active       Boolean @default(true)
+
+  department   Department    @relation(fields: [departmentId], references: [id])
+  invoiceLines InvoiceLine[]
+}
+
+// ---------------------------------------------------------------------------
+// Client account: folio / invoice
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id        String    @id @default(cuid())
+  number    String    @unique
+  clientId  String
+  status    String    @default("OPEN") // OPEN | ISSUED | PARTIALLY_PAID | PAID | CANCELLED
+  issuedAt  DateTime?
+  dueDate   DateTime?
+  subtotal  Int       @default(0)
+  taxTotal  Int       @default(0)
+  total     Int       @default(0)
+  paidTotal Int       @default(0)
+  notes     String?
+  createdAt DateTime  @default(now())
+
+  client   Client        @relation(fields: [clientId], references: [id])
+  lines    InvoiceLine[]
+  payments Payment[]
+  stays    Stay[]
+
+  @@index([status])
+}
+
+model InvoiceLine {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  departmentId   String
+  serviceItemId  String?
+  description    String
+  quantity       Float    @default(1)
+  unitPrice      Int
+  taxRate        Float    @default(0)
+  amount         Int
+  taxAmount      Int      @default(0)
+  total          Int
+  revenueAccount String
+  occurredAt     DateTime @default(now())
+
+  invoice     Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  department  Department   @relation(fields: [departmentId], references: [id])
+  serviceItem ServiceItem? @relation(fields: [serviceItemId], references: [id])
+
+  @@index([occurredAt])
+}
+
+// ---------------------------------------------------------------------------
+// Treasury: collections (encaissements) and disbursements (décaissements)
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id         String   @id @default(cuid())
+  reference  String   @unique
+  clientId   String?
+  invoiceId  String?
+  amount     Int
+  method     String // CASH | MOBILE_MONEY | BANK_TRANSFER | CARD | CHEQUE
+  receivedAt DateTime @default(now())
+  payerName  String
+  notes      String?
+  cancelled  Boolean  @default(false)
+
+  client  Client?  @relation(fields: [clientId], references: [id])
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
+  receipt Receipt?
+
+  @@index([receivedAt])
+}
+
+/// Sequentially numbered cash receipt. Never deleted — only cancelled,
+/// so the printed sequence stays auditable.
+model Receipt {
+  id            String   @id @default(cuid())
+  number        String   @unique
+  series        String   @default("REC")
+  year          Int
+  sequence      Int
+  paymentId     String   @unique
+  issuedAt      DateTime @default(now())
+  issuedBy      String?
+  payerName     String
+  amountInWords String
+  cancelled     Boolean  @default(false)
+  cancelReason  String?
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@unique([series, year, sequence])
+}
+
+model ExpenseCategory {
+  id             String  @id @default(cuid())
+  code           String  @unique // ENERGY | RAW_MATERIALS | ADMIN | OPERATING_SUPPLIES | DIRECT_STAFF
+  nameFr         String
+  nameEn         String
+  expenseAccount String
+  sortOrder      Int     @default(0)
+  active         Boolean @default(true)
+
+  expenses Expense[]
+}
+
+model Expense {
+  id           String    @id @default(cuid())
+  reference    String    @unique
+  categoryId   String
+  departmentId String?
+  supplierId   String?
+  description  String
+  amount       Int
+  taxAmount    Int       @default(0)
+  total        Int
+  method       String    @default("CASH")
+  paid         Boolean   @default(true)
+  incurredAt   DateTime  @default(now())
+  paidAt       DateTime?
+  notes        String?
+  cancelled    Boolean   @default(false)
+
+  category   ExpenseCategory @relation(fields: [categoryId], references: [id])
+  department Department?     @relation(fields: [departmentId], references: [id])
+  supplier   Supplier?       @relation(fields: [supplierId], references: [id])
+
+  @@index([incurredAt])
+}
+
+// ---------------------------------------------------------------------------
+// General accounting — double entry, with an analytical tag on each line
+// ---------------------------------------------------------------------------
+
+model JournalEntry {
+  id         String   @id @default(cuid())
+  number     String   @unique
+  journal    String // VT | AC | CA | BQ | OD
+  date       DateTime
+  label      String
+  sourceType String? // INVOICE | PAYMENT | EXPENSE | MANUAL
+  sourceId   String?
+  reversalOf String?
+  createdAt  DateTime @default(now())
+
+  lines JournalLine[]
+
+  @@index([date])
+  @@index([sourceType, sourceId])
+}
+
+model JournalLine {
+  id           String  @id @default(cuid())
+  entryId      String
+  accountCode  String
+  departmentId String?
+  label        String
+  debit        Int     @default(0)
+  credit       Int     @default(0)
+
+  entry      JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  account    Account      @relation(fields: [accountCode], references: [code])
+  department Department?  @relation(fields: [departmentId], references: [id])
+
+  @@index([accountCode])
+  @@index([departmentId])
+}
+
+// ---------------------------------------------------------------------------
+// Public website
+// ---------------------------------------------------------------------------
+
+/// An uploaded file. Bytes live under data/uploads; this row is the index.
+model Media {
+  id        String   @id @default(cuid())
+  filename  String
+  mimeType  String
+  size      Int
+  width     Int?
+  height    Int?
+  altFr     String?
+  altEn     String?
+  createdAt DateTime @default(now())
+
+  roomImages RoomImage[]
+  posts      Post[]
+}
+
+model RoomImage {
+  id        String @id @default(cuid())
+  roomId    String
+  mediaId   String
+  sortOrder Int    @default(0)
+
+  room  Room  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, mediaId])
+  @@index([roomId, sortOrder])
+}
+
+/// A booking submitted from the public site. It holds nothing until reception
+/// confirms it — only then does it become a Stay.
+model BookingRequest {
+  id            String    @id @default(cuid())
+  reference     String    @unique
+  roomId        String
+  guestName     String
+  guestEmail    String?
+  guestPhone    String
+  guestCountry  String?
+  checkIn       DateTime
+  checkOut      DateTime
+  adults        Int       @default(1)
+  children      Int       @default(0)
+  message       String?
+  status        String    @default("PENDING") // PENDING | CONFIRMED | DECLINED | CANCELLED
+  decidedAt     DateTime?
+  decidedBy     String?
+  declineReason String?
+  stayId        String?   @unique
+  clientId      String?
+  createdAt     DateTime  @default(now())
+
+  room Room @relation(fields: [roomId], references: [id])
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Post {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  titleFr      String
+  titleEn      String
+  excerptFr    String?
+  excerptEn    String?
+  bodyFr       String    @default("")
+  bodyEn       String    @default("")
+  category     String    @default("NEWS") // NEWS | ROOMS | OFFERS | EVENTS
+  coverMediaId String?
+  authorName   String?
+  published    Boolean   @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  cover Media? @relation(fields: [coverMediaId], references: [id])
+
+  @@index([published, publishedAt])
+  @@index([category])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

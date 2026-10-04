@@ -1,0 +1,338 @@
+@import "tailwindcss";
+
+/* FRIMA brand: deep navy and gold, taken from the property's logo. */
+:root {
+  --brand-navy: #1e3a5f;
+  --brand-navy-deep: #14283f;
+  --brand-gold: #c9a227;
+  --brand-gold-soft: #e8c75a;
+
+  --background: #e4e7ec;
+  --surface: #f2f4f7;
+  --surface-muted: #dde2e9;
+  --foreground: #16202e;
+  --muted: #58636f;
+  --border: #ccd3dc;
+
+  --positive: #1f7a54;
+  --negative: #b4342a;
+  --warning: #b5791a;
+  --info: #2563a8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-navy: var(--brand-navy);
+  --color-navy-deep: var(--brand-navy-deep);
+  --color-gold: var(--brand-gold);
+  --color-gold-soft: var(--brand-gold-soft);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Serif display face — used for the italic group labels and pull quotes. */
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Public site: an editorial type scale.
+   Headings are large, light and tightly tracked; labels are small, uppercase
+   and widely tracked. The contrast between the two carries the whole layout.
+   --------------------------------------------------------------------------- */
+
+.display-xl {
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+}
+
+.display-lg {
+  font-size: clamp(2rem, 4.4vw, 3.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  font-weight: 300;
+}
+
+.display-md {
+  font-size: clamp(1.5rem, 2.6vw, 2.125rem);
+  line-height: 1.14;
+  letter-spacing: -0.018em;
+  font-weight: 300;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.lede {
+  font-size: clamp(1.125rem, 1.7vw, 1.4375rem);
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+/* Reading copy on the public site: a notch larger than the browser default,
+   with generous leading, for comfortable long-form paragraphs. */
+.copy {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+@media (min-width: 640px) {
+  .copy {
+    font-size: 1.125rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll reveals
+   --------------------------------------------------------------------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* A slow drift on hero imagery, so a still photograph still feels alive. */
+@keyframes slow-pan {
+  from {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.14) translate3d(0, -1.2%, 0);
+  }
+}
+
+.hero-pan {
+  animation: slow-pan 26s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .hero-pan {
+    animation: none;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Global polish
+   --------------------------------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+::selection {
+  background: var(--brand-navy);
+  color: #fff;
+}
+
+/* A visible, branded focus ring for keyboard users, suppressed for mouse. */
+:focus-visible {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+/* An underline that draws itself from the left on hover. */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  transition: background-size 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  padding-bottom: 2px;
+}
+
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* Photographs settle in rather than snapping, which hides decode jank. */
+.img-fade {
+  opacity: 0;
+  animation: img-in 0.7s ease forwards;
+}
+
+@keyframes img-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Type over photographs
+
+   A scrim alone cannot cope with every picture: a pale sky behind a white
+   headline still swallows it. These shadows are soft and wide rather than
+   hard, so they read as depth rather than as a drop shadow.
+   --------------------------------------------------------------------------- */
+
+.on-image {
+  text-shadow:
+    0 1px 2px rgb(13 26 43 / 0.45),
+    0 4px 20px rgb(13 26 43 / 0.35);
+}
+
+.on-image-soft {
+  text-shadow:
+    0 1px 2px rgb(13 26 43 / 0.4),
+    0 2px 12px rgb(13 26 43 / 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   Frosted glass
+   Used by the header and by the controls that float over photographs. The
+   saturate step keeps colour behind the panel alive instead of washing it out.
+   --------------------------------------------------------------------------- */
+
+.glass {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(165%);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.glass-dark {
+  background: color-mix(in srgb, #0d1a2b 28%, transparent);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+
+.glass-pill {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* Safari on iOS drops backdrop-filter under memory pressure; the panels stay
+   legible because the fallback background is opaque enough on its own. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+  }
+  .glass-dark {
+    background: color-mix(in srgb, #0d1a2b 62%, transparent);
+  }
+  .glass-pill {
+    background: color-mix(in srgb, var(--surface) 95%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Carousels
+   --------------------------------------------------------------------------- */
+
+/* A scroll container that still drags and snaps, without the browser's bar. */
+.rail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail > * {
+  scroll-snap-align: start;
+}
+
+/* Anything clickable gets the hand. Browsers default <button> and <select> to
+   an arrow, which makes a flat design feel dead under the mouse. */
+button:not(:disabled),
+summary,
+label,
+select,
+[role="button"],
+[role="tab"],
+a[href] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* Text fields keep the caret; a label wrapping one should not hijack it. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]),
+textarea {
+  cursor: text;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="date"],
+input[type="file"],
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer;
+}
+
+/* Figures line up in columns when every digit is the same width. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  @page {
+    margin: 12mm;
+  }
+}
